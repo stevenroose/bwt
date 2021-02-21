@@ -32,11 +32,8 @@ pub fn get_welcome_banner(query: &Query, omit_donation: bool) -> Result<String> 
     )?;
 
     let est_fee = |target| {
-        query
-            .estimate_fee(target)
-            .ok()
-            .flatten()
-            .map_or("ɴ/ᴀ".into(), |rate| format!("{:.1}", rate))
+        let rate = query.estimate_fee(target).ok().flatten();
+        rate.map_or("ɴ/ᴀ".into(), |rate| format!("{:.0}", rate))
     };
     let est_20m = est_fee(2u16);
     let est_4h = est_fee(24u16);
@@ -114,10 +111,10 @@ pub fn get_welcome_banner(query: &Query, omit_donation: bool) -> Result<String> 
   DIFFICULTY: 🏋️  {difficulty} (ʀᴇ-🎯  ɪɴ {retarget_dur} ⏳)
   REWARD ERA: 🎁  {block_reward:.2} ʙᴛᴄ (½ ɪɴ {halving_dur} ⏳)
 
-  LAST BLOCK: ⛓️  {tip_height} ／ {tip_ago} ／ {tip_size} ／ {tip_weight} ／ {tip_n_tx}
-                 Fᴇᴇ ʀᴀᴛᴇ {tip_fee_per10}-{tip_fee_per90} sᴀᴛ/ᴠʙ ／ ᴀᴠɢ {tip_fee_avg} sᴀᴛ/ᴠʙ ／ ᴛᴏᴛᴀʟ {tip_fee_total:.3} ʙᴛᴄ
-     MEMPOOL: 💭  {mempool_size} ／ {mempool_n_tx} ／ ᴍɪɴ {mempool_min_fee:.1} sᴀᴛ/ᴠʙ
-    FEES EST: 🏷️  20 ᴍɪɴᴜᴛᴇs: {est_20m} ／ 4 ʜᴏᴜʀs: {est_4h} ／ 1 ᴅᴀʏ: {est_1d} (sᴀᴛ/ᴠʙ)
+  LAST BLOCK: ⛓️  {tip_height} ／ {tip_ago} ／ {tip_weight} ／ {tip_n_tx}
+                 Fᴇᴇ ʀᴀᴛᴇ {tip_fee_per10}-{tip_fee_per90} ／ ᴀᴠɢ {tip_fee_avg} ／ ᴛᴏᴛᴀʟ {tip_fee_total:.3} ʙᴛᴄ
+     MEMPOOL: 💭  {mempool_size} ／ {mempool_n_tx} ／ ᴍɪɴ Fᴇᴇ ʀᴀᴛᴇ {mempool_min_fee}
+    FEES EST: 🏷️  20 ᴍɪɴs: {est_20m} ／ 4 ʜᴏᴜʀs: {est_4h} ／ 1 ᴅᴀʏ: {est_1d}
 
 {donation_frag}"#,
         modes = modes.join(" "),
@@ -135,7 +132,7 @@ pub fn get_welcome_banner(query: &Query, omit_donation: bool) -> Result<String> 
         block_reward = block_reward.as_btc(),
         tip_height = tip.height,
         tip_ago = to_smallcaps(&tip_ago),
-        tip_size = to_smallcaps(&format_bytes(tip.total_size)),
+        //tip_size = to_smallcaps(&format_bytes(tip.total_size)),
         tip_weight = to_smallcaps(&format_metric(tip.total_weight as f64, " ", "WU")),
         tip_n_tx = to_smallcaps(&format_metric(tip.txs as f64, "", " txs")),
         tip_fee_per10 = tip.feerate_percentiles.0,
@@ -197,9 +194,9 @@ fn format_dur(dur: &Duration) -> String {
     }
     let minutes = dur.num_minutes();
     if minutes > 3 {
-        return format!("{} minutes", minutes);
+        return format!("{} mins", minutes);
     }
-    format!("{} seconds", dur.num_seconds())
+    format!("{} secs", dur.num_seconds())
 }
 
 fn format_bytes(bytes: u64) -> String {
