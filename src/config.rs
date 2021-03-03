@@ -179,6 +179,11 @@ pub struct Config {
     #[serde(default)]
     pub force_rescan: bool,
 
+    /// Don't wait for bitcoind to finish syncing up before importing addresses (useful with pruning for scanning during IBD) [env: IMPORT_WHILE_SYNCING]
+    #[cfg_attr(feature = "cli", structopt(short = "I", long, display_order(1004)))]
+    #[serde(default)]
+    pub import_while_syncing: bool,
+
     /// Gap limit for importing child addresses
     #[cfg_attr(
         feature = "cli",
@@ -231,7 +236,7 @@ pub struct Config {
     pub auth_ephemeral: bool,
 
     /// Print access token (useful with --auth-cookie) [env: PRINT_TOKEN]
-    #[cfg_attr(feature = "cli", structopt(long, display_order(1006)))]
+    #[cfg_attr(feature = "cli", structopt(long, display_order(1005)))]
     #[serde(default)]
     pub print_token: bool,
 
@@ -248,14 +253,14 @@ pub struct Config {
 
     /// Skip generating merkle proofs. Reduces resource usage, requires running Electrum with --skipmerklecheck. [env: ELECTRUM_SKIP_MERKLE]
     #[cfg(feature = "electrum")]
-    #[cfg_attr(feature = "cli", structopt(long, short = "M", display_order(1004)))]
+    #[cfg_attr(feature = "cli", structopt(long, short = "M", display_order(1006)))]
     #[serde(default)]
     pub electrum_skip_merkle: bool,
 
     /// Enable the Electrum SOCKS5-based authentication mechanism
     /// (see https://github.com/bwt-dev/bwt/blob/master/doc/auth.md) [env: ELECTRUM_SOCKS_AUTH]
     #[cfg(feature = "electrum")]
-    #[cfg_attr(feature = "cli", structopt(long, short = "5", display_order(1004)))]
+    #[cfg_attr(feature = "cli", structopt(long, short = "5", display_order(1007)))]
     #[serde(default)]
     pub electrum_socks_auth: bool,
 
@@ -310,7 +315,7 @@ pub struct Config {
     #[cfg_attr(feature = "cli", structopt(
         long = "no-startup-banner",
         parse(from_flag = std::ops::Not::not),
-        display_order(1005)
+        display_order(1007)
     ))]
     #[serde(default)]
     pub startup_banner: bool,
@@ -465,6 +470,9 @@ impl Config {
         let bool_env = |key| env::var(key).map_or(false, |val| !val.is_empty() && val != "0");
         if bool_env("FORCE_RESCAN") {
             config.force_rescan = true;
+        }
+        if bool_env("IMPORT_WHILE_SYNCING") {
+            config.import_while_syncing = true;
         }
         if bool_env("CREATE_WALLET_IF_MISSING") {
             config.create_wallet_if_missing = true;
@@ -689,7 +697,7 @@ impl From<&Config> for QueryConfig {
 defaultable!(Config,
   @default(
     verbose, timestamp, broadcast_cmd, startup_banner,
-    descriptors, xpubs, addresses, addresses_file, force_rescan,
+    descriptors, xpubs, addresses, addresses_file, force_rescan, import_while_syncing,
     bitcoind_wallet, bitcoind_dir, bitcoind_url, bitcoind_auth, bitcoind_cookie, create_wallet_if_missing,
     auth_cookie, auth_token, auth_ephemeral, print_token,
     #[cfg(feature = "electrum")] electrum_addr,
