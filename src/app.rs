@@ -300,12 +300,11 @@ fn init_bitcoind(
 
     // When `import_while_syncing` is not set (the default), block until bitcoind is fully synced up.
     // Otherwise, block until the RPC is 'warmed up', then report syncing progress in a non-blocking background thread.
-    let wait_full_sync = !config.import_while_syncing;
-    let bcinfo = wait_blockchain_sync(&rpc, progress_tx.clone(), interval, wait_full_sync)?;
-    #[cfg(feature = "cli")]
-    if !wait_full_sync && !is_synced(&bcinfo) {
+    let wait_block_sync = !config.import_while_syncing;
+    let bcinfo = wait_bitcoind_ready(&rpc, progress_tx.clone(), interval, wait_block_sync)?;
+    if !wait_block_sync && !is_synced(&bcinfo) && cfg!(feataure = "cli") {
         let rpc = rpc.clone();
-        thread::spawn(move || wait_blockchain_sync(&rpc, None, INTERVAL_SLOW, true).ok());
+        thread::spawn(move || wait_bitcoind_ready(&rpc, None, INTERVAL_SLOW, true).ok());
     }
 
     // Load/create wallet and wait for rescan to finish
